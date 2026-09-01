@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BE-SMART Fleet Route Viewer</title>
+    <!-- Leaflet Map CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 320px;
+        }
+        .color-box {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            margin-right: 8px;
+            border-radius: 3px;
+            vertical-align: middle;
+        }
+        .error-banner {
+            color: #d9534f;
+            font-weight: bold;
+            font-size: 13px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div class="legend" id="legend">
+        <b>Fleet Routes</b><br>
+        <span id="status-text" style="color: #666; font-size: 12px;">Loading route data...</span>
+    </div>
+
+    <script>
+        const map = L.map('map').setView([13.7550, 121.1000], 13);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        const truckColors = ['#ff0000', '#0066ff', '#00cc44', '#ff9900', '#9900cc'];
+
+        async function loadMultiTruckRoutes() {
+            const legendContainer = document.getElementById('legend');
+            const statusText = document.getElementById('status-text');
+
+            try {
+                const response = await fetch('/api/v1/route');
+
+                if (!response.ok) {
+                    const errorJson = await response.json().catch(() => ({ detail: 'Non-JSON server response' }));
+                    throw new Error(errorJson.detail || `HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.routes || data.routes.length === 0) {
+                    throw new Error('No routes returned from server.');
+                }
+
+                statusText.remove();
+                const bounds = L.latLngBounds();
+
+                data.routes.forEach((truckRoute, i) => {
+                    const routeColor = truckColors[i % truckColors.length];
+
+                    truckRoute.stops.forEach((stop, index) => {
+                        let markerText = `<b>Truck #${truckRoute.truck_id} - Stop #${index}</b><br>${stop.name}`;
+                        if (stop.id === "Depot") {
+                            markerText = `<b>🚩 Depot</b><br>${stop.name}`;
+                        }
+
+                        L.marker([stop.lat, stop.lng])
+                            .addTo(map)
+                            .bindPopup(markerText);
+
+                        bounds.extend([stop.lat, stop.lng]);
+                    });
+
+                    const leafletCoords = truckRoute.road_geometry.map(coord => [coord[1], coord[0]]);
+
+                    L.polyline(leafletCoords, {
+                        color: routeColor,
+                        weight: 5,
+                        opacity: 0.8
+                    }).addTo(map);
+
+                    legendContainer.innerHTML += `
+                        <div style="margin-top: 6px; font-size: 13px;">
+                            <span class="color-box" style="background:${routeColor}"></span>
+                            Truck #${truckRoute.truck_id} (${truckRoute.bins_collected}/5 bins, ${truckRoute.distance_km} km)
+                        </div>
+                    `;
+                });
+
+                map.fitBounds(bounds, { padding: [30, 30] });
+
+            } catch (error) {
+                console.error('Failed to render fleet routes:', error);
+                statusText.innerHTML = `<div class="error-banner">⚠️ ${error.message}</div>`;
+            }
+        }
+
+        loadMultiTruckRoutes();
+    </script>
+</body>
+</html>
