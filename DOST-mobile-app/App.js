@@ -1,0 +1,337 @@
+import { useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { TouchableOpacity, View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+
+import { colors } from './theme/colors';
+import { typography } from './theme/typography';
+
+// Auth screens
+import SplashScreen       from './screens/SplashScreen';
+import LoginScreen        from './screens/LoginScreen';
+import RegistrationScreen from './screens/RegistrationScreen';
+import OTPScreen          from './screens/OTPScreen';
+
+// Resident screens
+import ResidentHome           from './screens/resident/HomeScreen';
+import ResidentRewards        from './screens/resident/RewardsScreen';
+import ResidentQRScanner      from './screens/resident/QRScannerScreen';
+import ResidentBinPhotoScreen from './screens/resident/BinPhotoScreen';
+import ResidentResultScreen   from './screens/resident/ResultScreen';
+import ResidentTransactions   from './screens/resident/TransactionsScreen';
+import ResidentProfile        from './screens/resident/ProfileScreen';
+
+// MRF screens
+import MRFHome         from './screens/mrf/HomeScreen';
+import MRFRewards      from './screens/mrf/RewardsScreen';
+import MRFQRScanner    from './screens/mrf/QRScannerScreen';
+import MRFTransactions from './screens/mrf/TransactionsScreen';
+import MRFProfile      from './screens/mrf/ProfileScreen';
+
+// MRF Buyer screens
+import BuyerHome         from './screens/buyer/HomeScreen';
+import BuyerReservations from './screens/buyer/ReservationsScreen';
+import BuyerQRScanner    from './screens/buyer/QRScannerScreen';
+import BuyerTransactions from './screens/buyer/TransactionsScreen';
+import BuyerProfile      from './screens/buyer/ProfileScreen';
+
+// Collector screens
+import CollectorHome         from './screens/collector/HomeScreen';
+import CollectorQRScanner    from './screens/collector/QRScannerScreen';
+import CollectionConfirmed   from './screens/collector/CollectionConfirmedScreen';
+import CollectorTransactions from './screens/collector/TransactionsScreen';
+import CollectorProfile      from './screens/collector/ProfileScreen';
+import CollectorRoute        from './screens/collector/RouteScreen';
+
+const Stack               = createStackNavigator();
+const Tab                 = createBottomTabNavigator();
+const ResidentRootStack   = createStackNavigator();
+const CollectorRootStack  = createStackNavigator();
+
+// ─── Shared tab navigator config ─────────────────────────────────────────────
+const tabScreenOptions = ({ route }) => ({
+  headerShown: false,
+  tabBarShowLabel: true,
+  tabBarActiveTintColor: colors.primary,
+  tabBarInactiveTintColor: colors.textMuted,
+  tabBarStyle: {
+    backgroundColor: colors.secondary,
+    borderTopWidth: 0.5,
+    borderTopColor: colors.cardBorder,
+    height: 80,
+    paddingBottom: 20,
+    paddingTop: 8,
+  },
+  tabBarLabelStyle: {
+    fontSize: typography.size.xs,
+    fontWeight: typography.weight.medium,
+  },
+  tabBarIcon: ({ color, focused }) => {
+    const icons = {
+      Home:         focused ? 'home'      : 'home-outline',
+      Rewards:      focused ? 'gift'      : 'gift-outline',
+      Reservations: focused ? 'calendar'  : 'calendar-outline',
+      QR:           focused ? 'qr-code'   : 'qr-code-outline',
+      Transactions: focused ? 'receipt'   : 'receipt-outline',
+      Profile:      focused ? 'person'    : 'person-outline',
+    };
+    return <Ionicons name={icons[route.name]} size={22} color={color} />;
+  },
+});
+
+const fabOptions = {
+  tabBarLabel: () => null,
+  tabBarIcon: () => (
+    <View style={styles.fabButton}>
+      <Ionicons name="qr-code-outline" size={26} color={colors.secondary} />
+    </View>
+  ),
+  tabBarButton: (props) => (
+    <TouchableOpacity {...props} style={styles.fabWrapper} activeOpacity={0.85} />
+  ),
+};
+
+// ─── Resident tabs ────────────────────────────────────────────────────────────
+function ResidentTabs({ setIsAuthenticated }) {
+  return (
+    <Tab.Navigator screenOptions={tabScreenOptions}>
+      <Tab.Screen name="Home"         component={ResidentHome} />
+      <Tab.Screen name="Rewards"      component={ResidentRewards} />
+      <Tab.Screen name="QR"           component={ResidentQRScanner} options={fabOptions} />
+      <Tab.Screen name="Transactions" component={ResidentTransactions} />
+      <Tab.Screen
+        name="Profile"
+        children={() => <ResidentProfile setIsAuthenticated={setIsAuthenticated} />}
+      />
+    </Tab.Navigator>
+  );
+}
+
+// Root stack wraps resident tabs + BinPhoto + Result as full-screen overlays
+function ResidentRoot({ setIsAuthenticated }) {
+  return (
+    <ResidentRootStack.Navigator screenOptions={{ headerShown: false }}>
+      <ResidentRootStack.Screen name="ResidentTabsMain">
+        {() => <ResidentTabs setIsAuthenticated={setIsAuthenticated} />}
+      </ResidentRootStack.Screen>
+      <ResidentRootStack.Screen name="BinPhoto" component={ResidentBinPhotoScreen} />
+      <ResidentRootStack.Screen name="Result"   component={ResidentResultScreen} />
+    </ResidentRootStack.Navigator>
+  );
+}
+
+// ─── MRF tabs ─────────────────────────────────────────────────────────────────
+function MRFTabs({ setIsAuthenticated }) {
+  return (
+    <Tab.Navigator screenOptions={tabScreenOptions}>
+      <Tab.Screen name="Home"         component={MRFHome} />
+      <Tab.Screen name="Rewards"      component={MRFRewards} />
+      <Tab.Screen name="QR"           component={MRFQRScanner} options={fabOptions} />
+      <Tab.Screen name="Transactions" component={MRFTransactions} />
+      <Tab.Screen
+        name="Profile"
+        children={() => <MRFProfile setIsAuthenticated={setIsAuthenticated} />}
+      />
+    </Tab.Navigator>
+  );
+}
+
+// ─── MRF Buyer tabs ───────────────────────────────────────────────────────────
+function BuyerTabs({ setIsAuthenticated }) {
+  return (
+    <Tab.Navigator screenOptions={tabScreenOptions}>
+      <Tab.Screen name="Home"         component={BuyerHome} />
+      <Tab.Screen name="Reservations" component={BuyerReservations} options={{ tabBarLabel: 'Bidding' }} />
+      <Tab.Screen name="QR"           component={BuyerQRScanner} options={fabOptions} />
+      <Tab.Screen name="Transactions" component={BuyerTransactions} />
+      <Tab.Screen
+        name="Profile"
+        children={() => <BuyerProfile setIsAuthenticated={setIsAuthenticated} />}
+      />
+    </Tab.Navigator>
+  );
+}
+
+// ─── Collector tabs ───────────────────────────────────────────────────────────
+function CollectorTabNavigator({ setIsAuthenticated }) {
+  const collectorTabOptions = ({ route }) => ({
+    headerShown: false,
+    tabBarShowLabel: true,
+    tabBarActiveTintColor: '#0D7A5F',
+    tabBarInactiveTintColor: colors.textMuted,
+    tabBarStyle: {
+      backgroundColor: colors.secondary,
+      borderTopWidth: 0.5,
+      borderTopColor: colors.cardBorder,
+      height: 80,
+      paddingBottom: 20,
+      paddingTop: 8,
+    },
+    tabBarLabelStyle: {
+      fontSize: typography.size.xs,
+      fontWeight: typography.weight.medium,
+    },
+    tabBarIcon: ({ color, focused }) => {
+      const icons = {
+        CollectorHomeTab:    focused ? 'home'          : 'home-outline',
+        CollectorRouteTab:   focused ? 'navigate'      : 'navigate-outline',
+        CollectorQRTab:      'qr-code-outline',
+        CollectorLogTab:     focused ? 'receipt'       : 'receipt-outline',
+        CollectorProfileTab: focused ? 'person'        : 'person-outline',
+      };
+      return <Ionicons name={icons[route.name]} size={22} color={color} />;
+    },
+  });
+
+  return (
+    <Tab.Navigator screenOptions={collectorTabOptions}>
+      <Tab.Screen
+        name="CollectorHomeTab"
+        component={CollectorHome}
+        options={{ tabBarLabel: 'Home' }}
+      />
+      <Tab.Screen
+        name="CollectorRouteTab"
+        component={CollectorRoute}
+        options={{ tabBarLabel: 'Route' }}
+      />
+      <Tab.Screen
+        name="CollectorQRTab"
+        component={CollectorHome}
+        options={{
+          tabBarLabel: () => null,
+          tabBarIcon: () => (
+            <View style={styles.collectorFabButton}>
+              <Ionicons name="qr-code-outline" size={26} color="#fff" />
+            </View>
+          ),
+          tabBarButton: (props) => (
+            <TouchableOpacity
+              style={styles.fabWrapper}
+              activeOpacity={0.85}
+              onPress={props.onPress}
+            >
+              {props.children}
+            </TouchableOpacity>
+          ),
+        }}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('CollectorQRScreen');
+          },
+        })}
+      />
+      <Tab.Screen
+        name="CollectorLogTab"
+        component={CollectorTransactions}
+        options={{ tabBarLabel: 'Log' }}
+      />
+      <Tab.Screen
+        name="CollectorProfileTab"
+        options={{ tabBarLabel: 'Profile' }}
+      >
+        {() => <CollectorProfile setIsAuthenticated={setIsAuthenticated} />}
+      </Tab.Screen>
+    </Tab.Navigator>
+  );
+}
+
+// Root stack wraps tabs + QR scanner + Collection confirmed as full-screen overlays
+function CollectorTabs({ setIsAuthenticated }) {
+  return (
+    <CollectorRootStack.Navigator screenOptions={{ headerShown: false }}>
+      <CollectorRootStack.Screen name="CollectorTabsMain">
+        {() => <CollectorTabNavigator setIsAuthenticated={setIsAuthenticated} />}
+      </CollectorRootStack.Screen>
+      <CollectorRootStack.Screen name="CollectorQRScreen"   component={CollectorQRScanner} />
+      <CollectorRootStack.Screen name="CollectionConfirmed" component={CollectionConfirmed} />
+    </CollectorRootStack.Navigator>
+  );
+}
+
+// ─── Auth stack ───────────────────────────────────────────────────────────────
+function AuthStack({ setIsAuthenticated }) {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Splash" component={SplashScreen} />
+      <Stack.Screen
+        name="Login"
+        children={(props) => (
+          <LoginScreen {...props} setIsAuthenticated={setIsAuthenticated} />
+        )}
+      />
+      <Stack.Screen
+        name="Registration"
+        children={(props) => (
+          <RegistrationScreen {...props} setIsAuthenticated={setIsAuthenticated} />
+        )}
+      />
+      <Stack.Screen
+        name="OTP"
+        children={(props) => (
+          <OTPScreen {...props} setIsAuthenticated={setIsAuthenticated} />
+        )}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────────
+export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole]               = useState(null);
+
+  function handleSetAuth(value, role = null) {
+    setIsAuthenticated(value);
+    setUserRole(value ? role : null);
+  }
+
+  return (
+    <NavigationContainer>
+      {!isAuthenticated                        && <AuthStack      setIsAuthenticated={handleSetAuth} />}
+      {isAuthenticated && userRole === 'resident'  && <ResidentRoot  setIsAuthenticated={handleSetAuth} />}
+      {isAuthenticated && userRole === 'mrf'       && <MRFTabs       setIsAuthenticated={handleSetAuth} />}
+      {isAuthenticated && userRole === 'buyer'     && <BuyerTabs     setIsAuthenticated={handleSetAuth} />}
+      {isAuthenticated && userRole === 'collector' && <CollectorTabs setIsAuthenticated={handleSetAuth} />}
+    </NavigationContainer>
+  );
+}
+
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const styles = StyleSheet.create({
+  fabWrapper: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  fabButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 9999,
+    backgroundColor: colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  collectorFabButton: {
+    width: 58,
+    height: 58,
+    borderRadius: 9999,
+    backgroundColor: '#0D7A5F',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#0D7A5F',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+});
