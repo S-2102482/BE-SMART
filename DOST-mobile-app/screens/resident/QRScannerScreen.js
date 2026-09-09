@@ -27,60 +27,52 @@ export default function QRScannerScreen({ navigation }) {
   }
 
   const handleBarcodeScanned = ({ data }) => {
-    if (scanned) return; // prevent double-firing while navigating
+    if (scanned) return;
     setScanned(true);
-
-    // `data` is the raw QR code content — adjust parsing to however your
-    // bin QR codes are encoded (e.g. a bin ID, or a URL containing one).
     const binId = data;
-
-    // `replace` (not `navigate`) so this screen — and its CameraView — fully
-    // unmounts before BinPhotoScreen mounts its own CameraView. Two mounted
-    // CameraViews at once causes the second camera to render black.
     navigation.replace('BinPhoto', { binId });
   };
 
   return (
     <View style={styles.screen}>
-      {/* Only mount the camera while this screen is actually focused, so it
-          releases the camera hardware as soon as we navigate away. */}
       {isFocused && (
         <CameraView
-          style={StyleSheet.absoluteFillObject}
+          style={styles.camera}
           facing="back"
           enableTorch={flashOn}
           barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
           onBarcodeScanned={scanned ? undefined : handleBarcodeScanned}
-        />
+        >
+          {/* Flash toggle */}
+          <TouchableOpacity
+            style={styles.flashBtn}
+            onPress={() => setFlashOn(!flashOn)}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={flashOn ? 'flash' : 'flash-off'}
+              size={24}
+              color={colors.secondary}
+            />
+          </TouchableOpacity>
+
+          {/* Scan area overlay */}
+          <View style={styles.scanArea} pointerEvents="none">
+            <ScanFrame />
+            <Text style={styles.instruction}>Align QR code within the frame</Text>
+            <Text style={styles.subInstruction}>
+              Scan a bin's QR code to earn ECO
+            </Text>
+          </View>
+        </CameraView>
       )}
-
-      {/* Flash toggle */}
-      <TouchableOpacity
-        style={styles.flashBtn}
-        onPress={() => setFlashOn(!flashOn)}
-        activeOpacity={0.7}
-      >
-        <Ionicons
-          name={flashOn ? 'flash' : 'flash-off'}
-          size={24}
-          color={colors.secondary}
-        />
-      </TouchableOpacity>
-
-      {/* Scan area */}
-      <View style={styles.scanArea} pointerEvents="none">
-        <ScanFrame />
-        <Text style={styles.instruction}>Align QR code within the frame</Text>
-        <Text style={styles.subInstruction}>
-          Scan a bin's QR code to earn ECO
-        </Text>
-      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#1A1A1A' },
+  camera: { flex: 1, width: '100%', height: '100%' },
   centerContent: { justifyContent: 'center', alignItems: 'center', padding: 20, gap: 16 },
   permissionBtn: {
     backgroundColor: colors.secondary,

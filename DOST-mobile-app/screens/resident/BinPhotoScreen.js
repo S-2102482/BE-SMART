@@ -59,10 +59,9 @@ export default function BinPhotoScreen({ route, navigation }) {
     }
   };
 
-  return (
-    <View style={styles.screen}>
-      <CameraView style={StyleSheet.absoluteFillObject} facing="back" ref={cameraRef} />
-
+return (
+  <View style={styles.screen}>
+    <CameraView style={styles.camera} facing="back" ref={cameraRef}>
       <View style={styles.overlay}>
         <Text style={styles.instruction}>Bin {binId}</Text>
         <Text style={styles.subInstruction}>Take a photo of the bin to check if it's full</Text>
@@ -78,12 +77,14 @@ export default function BinPhotoScreen({ route, navigation }) {
           </TouchableOpacity>
         )}
       </View>
-    </View>
-  );
+    </CameraView>
+  </View>
+);
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#1A1A1A' },
+  camera: { flex: 1, width: '100%', height: '100%' },
   centerContent: { justifyContent: 'center', alignItems: 'center', padding: 20, gap: 16 },
   permissionBtn: {
     backgroundColor: colors.secondary,
