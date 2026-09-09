@@ -1,7 +1,7 @@
 // Base URL of the FastAPI backend. Point this at your deployed API,
 // or your local machine's LAN IP when testing with Expo Go
 // (e.g. "http://192.168.1.50:8082" — "localhost" won't work from a phone).
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8082';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://172.16.134.64:8000';
 
 // How long to wait before giving up on a stalled/unreachable connection.
 // fetch() has no built-in timeout, so without this a bad connection can
